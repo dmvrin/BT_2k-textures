@@ -7,13 +7,42 @@
     <!-- model-viewer -->
     <script type="module" src="https://unpkg.com/@google/model-viewer@latest"></script>
     <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: black; /* Background color */
+            color: white; /* Text color */
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .model-container {
+            position: relative; /* Makes the spinner relative to this container */
+            width: 100%;
+            height: 400px; /* Adjust as needed */
+            display: flex; /* Flexbox for easier centering */
+            justify-content: center; /* Horizontally centers the spinner */
+            align-items: center; /* Vertically centers the spinner */
+        }       
+        model-viewer {
+            width: 100%;
+            height: 400px;
+            background-color: black;
+        }
         
 
     </style>
 </head>
 <body>
-     <model-viewer id="arModel" src="BaalshaminTemple.gltf" scale="0.3" ar ar-modes="scene-viewer webxr quick-look" environment-image="neutral" auto-rotate camera-controls>
-  
+     <div class="model-container">
+        <!-- Spinner for loading animation -->
+        <div id="spinner" class="spinner"></div>
+        
+        <model-viewer id="arModel" src="BaalshaminTemple.gltf" scale="0.3 0.3 0.3" ar ar-modes="scene-viewer webxr quick-look" environment-image="neutral" auto-rotate camera-controls>
+            <!-- Hidden slot element used by Model Viewer for the custom AR button -->
+            <button slot="ar-button" id="customArButton">View in AR</button>
+        </model-viewer>
+    </div>
     
     
 
