@@ -9,7 +9,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Temple of Baalshamin</title>
     <!-- model-viewer -->
-    <script type="module" src="https://unpkg.com/@google/model-viewer@latest" defer></script>
+    <script type="module" src="https://unpkg.com/@google/model-viewer@4.0.0" defer></script>
+
     <style>
         body {
             margin: 0;
@@ -103,7 +104,7 @@
         /* Center text column on desktop */
         @media (min-width: 768px) {
             #customArButton {
-                 display: none; /* Hide the button on desktop screens */
+                 /*display: none; /* Hide the button on desktop screens */
             }
             p.description {
                 max-width: 800px; /* Max width for the text column */
@@ -167,22 +168,39 @@
 
         //const audioControl = document.getElementById('audioControl');
         //const backgroundAudio = document.getElementById('backgroundAudio');
-        const arModel = document.getElementById('arModel');
-        const spinner = document.getElementById('spinner');
+        //const arModel = document.getElementById('arModel');
+        //const spinner = document.getElementById('spinner');
         const descriptionText = document.getElementById('descriptionText');
         const enButton = document.getElementById('enButton');
         const frButton = document.getElementById('frButton');
+        //const customArButton = document.getElementById('customArButton'); 
 
-       
-        // Hide the spinner when the model is fully visible
-        arModel.addEventListener('model-visibility', (event) => {
-            if (event.detail.visible) {
-                console.log('Model is fully visible');
-                setTimeout(() => {
-                    spinner.classList.add('hide'); // Hides the spinner with a delay
-                }, 300); // Adds a 300 millisecond delay
-            }
+        
+        // Show AR button only on mobile devices (phones and tablets) and hide the spinner when the model is fully loaded
+        document.addEventListener("DOMContentLoaded", () => {
+            const arModel = document.getElementById('arModel');
+            const spinner = document.getElementById('spinner');
+            const customArButton = document.getElementById('customArButton');
+            
+            // Initially hide the AR button
+            //customArButton.style.display = 'block'; //none
+
+            // Show AR button only on mobile devices (phones and tablets) and hide spinner when the model is fully loaded
+            arModel.addEventListener('model-visibility', (event) => {
+                if (event.detail.visible) {
+                    setTimeout(() => {
+                        spinner.classList.add('hide'); // Hide loading spinner
+
+                        // Check if the device is mobile or tablet based on userAgent
+                        const isMobileOrTablet = /Mobi|Android|iPad|iPhone/i.test(navigator.userAgent);
+                        if (isMobileOrTablet) {
+                            customArButton.style.display = 'block'; // Show AR button on mobile and tablet devices
+                        }
+                    }, 300); // 300 ms delay for smoother transition
+                }
+            });
         });
+
 
 
         // Language switch function
@@ -209,7 +227,25 @@
             }
         }
 
+        //Material toughness
+        arModel.addEventListener('load', () => {
+            const model = arModel.model; // Access the loaded model
+            if (model) {
+                model.traverse((node) => {
+                    if (node.isMesh && node.material) {
+                        node.material.metalness = 0;   // Set metalness to 0 to remove shininess
+                        node.material.roughness = 1;   // Set roughness to 1 for a fully matte surface
+                        node.material.needsUpdate = true; // Apply changes to the material
+                    }
+                });
+            }
+        });
 
+
+
+
+
+ 
         // Prevent page scroll while interacting with the 3D model, but allow interaction with the button
         arModel.addEventListener('touchmove', (e) => {
             if (e.target.tagName === 'MODEL-VIEWER') {
@@ -217,14 +253,69 @@
             }
         });
 
-        // Remove Model before reload page
-        //window.addEventListener('beforeunload', function() {
-        //        const arModel = document.getElementById('arModel');
-        //        if (arModel) {
-        //            arModel.remove(); // Remove Model before reload page
-        //        }
-       // });
+        // Handle WebGL context lost and attempt to prevent full loss
+        arModel.addEventListener('webglcontextlost', (event) => {
+            event.preventDefault(); // Prevents complete loss of WebGL context
+            console.warn('WebGL context lost. Attempting to restore.');
+        });
 
+        // Log WebGL context restoration
+        arModel.addEventListener('webglcontextrestored', () => {
+            console.log('WebGL context successfully restored.');
+        });
+        
+
+        // Check if WebGL is supported and context is not lost
+        const canvas = document.createElement('canvas');
+        const gl = canvas.getContext('webgl');
+        if (!gl) {
+            console.error("WebGL is not supported on this device.");
+        } else {
+            console.log("WebGL initialized successfully.");
+
+            // Ensure XR is available only after WebGL initialization
+            if (this.threeRenderer && this.threeRenderer.xr && this.threeRenderer.xr.isPresenting) {
+                // XR is supported and initialized
+                console.log("XR is available and presenting.");
+                
+                // Call XR-related functions
+                const xrSession = this.threeRenderer.xr.getSession();
+                if (xrSession) {
+                    console.log("XR session started:", xrSession);
+                    // Logic for using XR goes here
+                } else {
+                    console.warn("Unable to start XR session.");
+                }
+            } else {
+                console.warn("XR is not available or not presenting.");
+            }
+        }
+
+        // Handle WebGL context loss on the canvas
+        canvas.addEventListener('webglcontextlost', (event) => {
+            event.preventDefault();
+            console.warn("WebGL context lost.");
+        });
+
+        // Handle WebGL context restoration on the canvas
+        canvas.addEventListener('webglcontextrestored', () => {
+            console.log("WebGL context restored.");
+        });
+
+        // Global handler for unhandled promise rejections to prevent script interruption
+        window.addEventListener("unhandledrejection", function(event) {
+            console.warn("Unhandled promise rejection:", event.reason);
+        });
+
+/*
+        //Remove Model before reload page
+        window.addEventListener('beforeunload', function() {
+            const arModel = document.getElementById('arModel');
+            if (arModel) {
+                arModel.remove(); // Remove Model before reload page
+            }
+        });
+*/
         
 
     </script>
